@@ -4,6 +4,8 @@ data class FileDto(
 
         val fileName: String,
 
+        val level: Int,
+
         val readFlag: Boolean,
 
         val writeFlag: Boolean,

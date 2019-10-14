@@ -4,6 +4,7 @@ import com.kkaminsky.mondateinformationsystem.dto.FileDto
 import com.kkaminsky.mondateinformationsystem.dto.RequestDto
 import com.kkaminsky.mondateinformationsystem.dto.UserCheckDto
 import com.kkaminsky.mondateinformationsystem.dto.UserDto
+import com.kkaminsky.mondateinformationsystem.model.FileEntity
 import com.kkaminsky.mondateinformationsystem.model.RequestEntity
 import com.kkaminsky.mondateinformationsystem.model.RoleEntity
 import com.kkaminsky.mondateinformationsystem.model.UserEntity
@@ -27,6 +28,37 @@ class UserServiceImpl @Autowired constructor(
         val requestRepository: RequestRepository
 ) : UserService {
 
+    override fun edit(oldUsername: String, newUsername: String, newRole: String, newLevel: Int) {
+
+        val role = roleRepository.findByRole(newRole)?:throw  Exception("Роль не найден!")
+        val user = userRepository.findByUsername(oldUsername)?:throw Exception("Пользователь $oldUsername не существует!")
+
+        user.username = newUsername
+        user.role = role
+        user.level = newLevel
+
+        userRepository.save(user)
+    }
+
+    override fun createFile(fileName: String, username: String) {
+
+        val file = fileRepository.findByFileName(fileName)
+
+        if (file!=null) throw Exception("Файл с таким именем уже существует!")
+
+        val newFile = FileEntity()
+
+        newFile.fileName = fileName
+
+        val user = userRepository.findByUsername(username)?:throw Exception("Пользователь $username не найден!")
+
+        newFile.owner = user
+
+        newFile.level = user.level
+
+        fileRepository.save(newFile)
+    }
+
     override fun editFile(fileName: String, level: Int) {
 
         val file = fileRepository.findByFileName(fileName)?:throw Exception("Файл $fileName не найден!")
@@ -37,13 +69,6 @@ class UserServiceImpl @Autowired constructor(
 
     }
 
-    override fun editUser(username: String, level: Int) {
-        val user = userRepository.findByUsername(username)?:throw Exception("Пользователь $username не существует!")
-
-        user.level = level
-
-        userRepository.save(user)
-    }
 
     override fun getAllUsers(): List<UserDto> {
 
@@ -59,7 +84,7 @@ class UserServiceImpl @Autowired constructor(
 
     override fun getRequests(): List<RequestDto> {
 
-        return requestRepository.findByDone(true).map {
+        return requestRepository.findByDone(false).map {
             RequestDto(
                     fileName = it.file!!.fileName!!,
                     ownerName =it.user!!.username!!
@@ -123,13 +148,14 @@ class UserServiceImpl @Autowired constructor(
 
         return fileRepository.findAll().map {
 
-            val readFlag = it.level!! >= user.level!!
-            val writeFlag = it.level!! <= user.level!!
+            val readFlag = it.level!! <= user.level!!
+            val writeFlag = it.level!! >= user.level!!
             val deleteFlag = it.owner!!.id == user.id
             val requestFlag = requestRepository.findByFile(it) != null
 
             FileDto(
                     fileName = it.fileName!!,
+                    level = it.level!!,
                     readFlag = readFlag,
                     writeFlag = writeFlag,
                     deleteFlag = deleteFlag,

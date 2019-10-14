@@ -17,7 +17,8 @@ interface UserService {
     fun deleteFile(fileName: String)
     fun getRequests(): List<RequestDto>
     fun editFile(fileName: String, level: Int)
-    fun editUser(username: String, level: Int)
+    fun edit(oldUsername: String, newUsername: String, newRole: String, newLevel:Int)
     fun getAllUsers(): List<UserDto>
+    fun createFile(fileName: String, username: String)
 
 }
